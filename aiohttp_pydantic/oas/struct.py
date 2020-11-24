@@ -312,3 +312,8 @@ class OpenApiSpec3:
     @property
     def spec(self):
         return self._spec
+
+    @property
+    def definitions(self):
+        self._spec.setdefault('definitions', {})
+        return self._spec['definitions']

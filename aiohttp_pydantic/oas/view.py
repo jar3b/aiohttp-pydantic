@@ -47,13 +47,22 @@ class _OASResponseBuilder:
     generate the OAS operation response.
     """
 
-    def __init__(self, oas_operation):
+    def __init__(self, oas_operation, definitions):
         self._oas_operation = oas_operation
+        self._definitions = definitions
 
-    @staticmethod
-    def _handle_pydantic_base_model(obj):
+    def _process_definitions(self, schema):
+        if 'definitions' in schema:
+            for k, v in schema['definitions'].items():
+                self._definitions[k] = v
+            del schema['definitions']
+
+        return schema
+
+    def _handle_pydantic_base_model(self, obj):
         if is_pydantic_base_model(obj):
-            return obj.schema()
+            return self._process_definitions(obj.schema())
+
         return {}
 
     def _handle_list(self, obj):
@@ -88,7 +97,7 @@ class _OASResponseBuilder:
 
 
 def _add_http_method_to_oas(
-    oas_path: PathItem, http_method: str, view: Type[PydanticView]
+    oas_path: PathItem, http_method: str, view: Type[PydanticView], definitions: dict
 ):
     http_method = http_method.lower()
     oas_operation: OperationObject = getattr(oas_path, http_method)
@@ -123,7 +132,7 @@ def _add_http_method_to_oas(
 
     return_type = handler.__annotations__.get("return")
     if return_type is not None:
-        _OASResponseBuilder(oas_operation).build(return_type)
+        _OASResponseBuilder(oas_operation, definitions).build(return_type)
 
 
 def generate_oas(apps: List[Application]) -> dict:
@@ -131,6 +140,7 @@ def generate_oas(apps: List[Application]) -> dict:
     Generate and return Open Api Specification from PydanticView in application.
     """
     oas = OpenApiSpec3()
+
     for app in apps:
         for resources in app.router.resources():
             for resource_route in resources:
@@ -140,9 +150,9 @@ def generate_oas(apps: List[Application]) -> dict:
                     path = oas.paths[info.get("path", info.get("formatter"))]
                     if resource_route.method == "*":
                         for method_name in view.allowed_methods:
-                            _add_http_method_to_oas(path, method_name, view)
+                            _add_http_method_to_oas(path, method_name, view, oas.definitions)
                     else:
-                        _add_http_method_to_oas(path, resource_route.method, view)
+                        _add_http_method_to_oas(path, resource_route.method, view, oas.definitions)
 
     return oas.spec
 

@@ -55,9 +55,8 @@ class _OASResponseBuilder:
         if 'definitions' in schema:
             for k, v in schema['definitions'].items():
                 self._definitions[k] = v
-            del schema['definitions']
 
-        return schema
+        return {i:schema[i] for i in schema if i!='definitions'}
 
     def _handle_pydantic_base_model(self, obj):
         if is_pydantic_base_model(obj):

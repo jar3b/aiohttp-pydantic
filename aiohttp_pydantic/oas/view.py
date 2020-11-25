@@ -172,6 +172,7 @@ async def oas_ui(request):
 
     static_url = request.app.router["static"].url_for(filename="")
     spec_url = request.app.router["spec"].url_for()
+
     if request.scheme != request.headers.get('x-forwarded-proto', request.scheme):
         request = request.clone(scheme=request.headers['x-forwarded-proto'])
     host = request.url.origin()

@@ -83,7 +83,10 @@ def inject_params(
                 else:
                     injector.inject(self.request, args, kwargs)
             except ValidationError as error:
-                return json_response(text=error.json(), status=400)
+                if self.request.app['raise_validation_errors']:
+                    raise
+                else:
+                    return json_response(text=error.json(), status=400)
 
         return await handler(self, *args, **kwargs)
 

@@ -13,10 +13,13 @@ def setup(
     apps_to_expose: Iterable[web.Application] = (),
     url_prefix: str = "/oas",
     enable: bool = True,
+    raise_validation_errors: bool = False,
 ):
     if enable:
         oas_app = web.Application()
         oas_app["apps to expose"] = tuple(apps_to_expose) or (app,)
+        for a in oas_app["apps to expose"]:
+            a['raise_validation_errors'] = raise_validation_errors
         oas_app["index template"] = jinja2.Template(
             resources.read_text("aiohttp_pydantic.oas", "index.j2")
         )
